@@ -3,7 +3,7 @@
  * Plugin Name: Склейка предлогов
  * Description: Склеивает русские короткие служебные слова, сокращения и числа с единицами неразрывными пробелами без изменения текста записей.
  * Version: 0.1.0
- * Author: Живая история
+ * Author: gogolevmatvey
  * Text Domain: wp-russian-preposition-glue
  *
  * @package WpRussianPrepositionGlue
@@ -11,38 +11,38 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const HISTORY_ALIVE_TYPOGRAPHY_SCOPE_OPTION = 'history_alive_typography_scope';
-const HISTORY_ALIVE_TYPOGRAPHY_SCOPE_ALL    = 'all';
-const HISTORY_ALIVE_TYPOGRAPHY_SCOPE_SINGLE = 'singular';
-const HISTORY_ALIVE_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION = 'history_alive_typography_skip_heading_short_words';
-const HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OPTION          = 'history_alive_typography_short_word_mode';
-const HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT            = 'soft';
-const HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_FULL            = 'full';
-const HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OFF             = 'off';
-const HISTORY_ALIVE_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_OPTION = 'history_alive_typography_soft_max_next_word_length';
-const HISTORY_ALIVE_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_DEFAULT = 10;
+const WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_OPTION = 'wp_russian_preposition_glue_scope';
+const WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_ALL    = 'all';
+const WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_SINGLE = 'singular';
+const WP_RUSSIAN_PREPOSITION_GLUE_SKIP_HEADING_SHORT_WORDS_OPTION = 'wp_russian_preposition_glue_skip_heading_short_words';
+const WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OPTION          = 'wp_russian_preposition_glue_short_word_mode';
+const WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT            = 'soft';
+const WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_FULL            = 'full';
+const WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OFF             = 'off';
+const WP_RUSSIAN_PREPOSITION_GLUE_SOFT_MAX_NEXT_WORD_LENGTH_OPTION = 'wp_russian_preposition_glue_soft_max_next_word_length';
+const WP_RUSSIAN_PREPOSITION_GLUE_SOFT_MAX_NEXT_WORD_LENGTH_DEFAULT = 10;
 
 /**
  * Sanitizes the typography scope setting.
  *
  * @param mixed $value Raw option value.
  */
-function history_alive_typography_sanitize_scope( mixed $value ): string {
+function wp_russian_preposition_glue_sanitize_scope( mixed $value ): string {
 	$scope = is_string( $value ) ? sanitize_key( $value ) : '';
 
-	if ( in_array( $scope, array( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_ALL, HISTORY_ALIVE_TYPOGRAPHY_SCOPE_SINGLE ), true ) ) {
+	if ( in_array( $scope, array( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_ALL, WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_SINGLE ), true ) ) {
 		return $scope;
 	}
 
-	return HISTORY_ALIVE_TYPOGRAPHY_SCOPE_SINGLE;
+	return WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_SINGLE;
 }
 
 /**
  * Returns the active typography scope.
  */
-function history_alive_typography_get_scope(): string {
-	return history_alive_typography_sanitize_scope(
-		get_option( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_OPTION, HISTORY_ALIVE_TYPOGRAPHY_SCOPE_SINGLE )
+function wp_russian_preposition_glue_get_scope(): string {
+	return wp_russian_preposition_glue_sanitize_scope(
+		get_option( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_OPTION, WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_SINGLE )
 	);
 }
 
@@ -51,16 +51,16 @@ function history_alive_typography_get_scope(): string {
  *
  * @param mixed $value Raw option value.
  */
-function history_alive_typography_sanitize_short_word_mode( mixed $value ): string {
+function wp_russian_preposition_glue_sanitize_short_word_mode( mixed $value ): string {
 	$mode = is_string( $value ) ? sanitize_key( $value ) : '';
 
 	if (
 		in_array(
 			$mode,
 			array(
-				HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT,
-				HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_FULL,
-				HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OFF,
+				WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT,
+				WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_FULL,
+				WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OFF,
 			),
 			true
 		)
@@ -68,15 +68,15 @@ function history_alive_typography_sanitize_short_word_mode( mixed $value ): stri
 		return $mode;
 	}
 
-	return HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT;
+	return WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT;
 }
 
 /**
  * Returns the active short-word glue mode.
  */
-function history_alive_typography_get_short_word_mode(): string {
-	return history_alive_typography_sanitize_short_word_mode(
-		get_option( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OPTION, HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT )
+function wp_russian_preposition_glue_get_short_word_mode(): string {
+	return wp_russian_preposition_glue_sanitize_short_word_mode(
+		get_option( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OPTION, WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT )
 	);
 }
 
@@ -85,7 +85,7 @@ function history_alive_typography_get_short_word_mode(): string {
  *
  * @param mixed $value Raw option value.
  */
-function history_alive_typography_sanitize_soft_max_next_word_length( mixed $value ): int {
+function wp_russian_preposition_glue_sanitize_soft_max_next_word_length( mixed $value ): int {
 	$length = absint( $value );
 
 	if ( $length < 4 ) {
@@ -102,11 +102,11 @@ function history_alive_typography_sanitize_soft_max_next_word_length( mixed $val
 /**
  * Returns the maximum next-word length used in soft short-word glue mode.
  */
-function history_alive_typography_get_soft_max_next_word_length(): int {
-	return history_alive_typography_sanitize_soft_max_next_word_length(
+function wp_russian_preposition_glue_get_soft_max_next_word_length(): int {
+	return wp_russian_preposition_glue_sanitize_soft_max_next_word_length(
 		get_option(
-			HISTORY_ALIVE_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_OPTION,
-			HISTORY_ALIVE_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_DEFAULT
+			WP_RUSSIAN_PREPOSITION_GLUE_SOFT_MAX_NEXT_WORD_LENGTH_OPTION,
+			WP_RUSSIAN_PREPOSITION_GLUE_SOFT_MAX_NEXT_WORD_LENGTH_DEFAULT
 		)
 	);
 }
@@ -116,85 +116,85 @@ function history_alive_typography_get_soft_max_next_word_length(): int {
  *
  * @param mixed $value Raw option value.
  */
-function history_alive_typography_sanitize_checkbox( mixed $value ): string {
+function wp_russian_preposition_glue_sanitize_checkbox( mixed $value ): string {
 	return '1' === (string) $value ? '1' : '0';
 }
 
 /**
  * Returns true when short service words should not be glued inside headings.
  */
-function history_alive_typography_skip_short_words_in_headings(): bool {
-	return '1' === history_alive_typography_sanitize_checkbox(
-		get_option( HISTORY_ALIVE_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION, '1' )
+function wp_russian_preposition_glue_skip_short_words_in_headings(): bool {
+	return '1' === wp_russian_preposition_glue_sanitize_checkbox(
+		get_option( WP_RUSSIAN_PREPOSITION_GLUE_SKIP_HEADING_SHORT_WORDS_OPTION, '1' )
 	);
 }
 
 /**
  * Registers plugin settings.
  */
-function history_alive_typography_register_settings(): void {
+function wp_russian_preposition_glue_register_settings(): void {
 	register_setting(
-		'history_alive_typography',
-		HISTORY_ALIVE_TYPOGRAPHY_SCOPE_OPTION,
+		'wp_russian_preposition_glue',
+		WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_OPTION,
 		array(
 			'type'              => 'string',
-			'sanitize_callback' => 'history_alive_typography_sanitize_scope',
-			'default'           => HISTORY_ALIVE_TYPOGRAPHY_SCOPE_SINGLE,
+			'sanitize_callback' => 'wp_russian_preposition_glue_sanitize_scope',
+			'default'           => WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_SINGLE,
 		)
 	);
 
 	register_setting(
-		'history_alive_typography',
-		HISTORY_ALIVE_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION,
+		'wp_russian_preposition_glue',
+		WP_RUSSIAN_PREPOSITION_GLUE_SKIP_HEADING_SHORT_WORDS_OPTION,
 		array(
 			'type'              => 'string',
-			'sanitize_callback' => 'history_alive_typography_sanitize_checkbox',
+			'sanitize_callback' => 'wp_russian_preposition_glue_sanitize_checkbox',
 			'default'           => '1',
 		)
 	);
 
 	register_setting(
-		'history_alive_typography',
-		HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OPTION,
+		'wp_russian_preposition_glue',
+		WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OPTION,
 		array(
 			'type'              => 'string',
-			'sanitize_callback' => 'history_alive_typography_sanitize_short_word_mode',
-			'default'           => HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT,
+			'sanitize_callback' => 'wp_russian_preposition_glue_sanitize_short_word_mode',
+			'default'           => WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT,
 		)
 	);
 
 	register_setting(
-		'history_alive_typography',
-		HISTORY_ALIVE_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_OPTION,
+		'wp_russian_preposition_glue',
+		WP_RUSSIAN_PREPOSITION_GLUE_SOFT_MAX_NEXT_WORD_LENGTH_OPTION,
 		array(
 			'type'              => 'integer',
-			'sanitize_callback' => 'history_alive_typography_sanitize_soft_max_next_word_length',
-			'default'           => HISTORY_ALIVE_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_DEFAULT,
+			'sanitize_callback' => 'wp_russian_preposition_glue_sanitize_soft_max_next_word_length',
+			'default'           => WP_RUSSIAN_PREPOSITION_GLUE_SOFT_MAX_NEXT_WORD_LENGTH_DEFAULT,
 		)
 	);
 }
-add_action( 'admin_init', 'history_alive_typography_register_settings' );
+add_action( 'admin_init', 'wp_russian_preposition_glue_register_settings' );
 
 /**
  * Adds the settings page to the WordPress admin.
  */
-function history_alive_typography_add_settings_page(): void {
+function wp_russian_preposition_glue_add_settings_page(): void {
 	add_options_page(
 		__( 'Склейка предлогов', 'wp-russian-preposition-glue' ),
 		__( 'Склейка предлогов', 'wp-russian-preposition-glue' ),
 		'manage_options',
 		'wp-russian-preposition-glue',
-		'history_alive_typography_render_settings_page'
+		'wp_russian_preposition_glue_render_settings_page'
 	);
 }
-add_action( 'admin_menu', 'history_alive_typography_add_settings_page' );
+add_action( 'admin_menu', 'wp_russian_preposition_glue_add_settings_page' );
 
 /**
  * Adds a settings shortcut to the plugin row on the Plugins page.
  *
  * @param array<int|string, string> $links Existing plugin action links.
  */
-function history_alive_typography_add_plugin_action_links( array $links ): array {
+function wp_russian_preposition_glue_add_plugin_action_links( array $links ): array {
 	$settings_link = sprintf(
 		'<a href="%s">%s</a>',
 		esc_url( admin_url( 'options-general.php?page=wp-russian-preposition-glue' ) ),
@@ -205,26 +205,26 @@ function history_alive_typography_add_plugin_action_links( array $links ): array
 
 	return $links;
 }
-add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'history_alive_typography_add_plugin_action_links' );
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'wp_russian_preposition_glue_add_plugin_action_links' );
 
 /**
  * Renders the settings page.
  */
-function history_alive_typography_render_settings_page(): void {
+function wp_russian_preposition_glue_render_settings_page(): void {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
 
-	$scope = history_alive_typography_get_scope();
-	$skip_heading_short_words = history_alive_typography_skip_short_words_in_headings();
-	$short_word_mode = history_alive_typography_get_short_word_mode();
-	$soft_max_next_word_length = history_alive_typography_get_soft_max_next_word_length();
+	$scope = wp_russian_preposition_glue_get_scope();
+	$skip_heading_short_words = wp_russian_preposition_glue_skip_short_words_in_headings();
+	$short_word_mode = wp_russian_preposition_glue_get_short_word_mode();
+	$soft_max_next_word_length = wp_russian_preposition_glue_get_soft_max_next_word_length();
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Склейка предлогов', 'wp-russian-preposition-glue' ); ?></h1>
 
 		<form method="post" action="options.php">
-			<?php settings_fields( 'history_alive_typography' ); ?>
+			<?php settings_fields( 'wp_russian_preposition_glue' ); ?>
 
 			<table class="form-table" role="presentation">
 				<tr>
@@ -237,7 +237,7 @@ function history_alive_typography_render_settings_page(): void {
 
 							<p>
 								<label>
-									<input type="radio" name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_OPTION ); ?>" value="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_SINGLE ); ?>" <?php checked( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_SINGLE, $scope ); ?>>
+									<input type="radio" name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_OPTION ); ?>" value="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_SINGLE ); ?>" <?php checked( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_SINGLE, $scope ); ?>>
 									<?php esc_html_e( 'Только одиночные записи и страницы', 'wp-russian-preposition-glue' ); ?>
 								</label>
 							</p>
@@ -247,7 +247,7 @@ function history_alive_typography_render_settings_page(): void {
 
 							<p>
 								<label>
-									<input type="radio" name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_OPTION ); ?>" value="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_ALL ); ?>" <?php checked( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_ALL, $scope ); ?>>
+									<input type="radio" name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_OPTION ); ?>" value="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_ALL ); ?>" <?php checked( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_ALL, $scope ); ?>>
 									<?php esc_html_e( 'Весь фронтенд', 'wp-russian-preposition-glue' ); ?>
 								</label>
 							</p>
@@ -260,9 +260,9 @@ function history_alive_typography_render_settings_page(): void {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Заголовки', 'wp-russian-preposition-glue' ); ?></th>
 					<td>
-						<input type="hidden" name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION ); ?>" value="0">
+						<input type="hidden" name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SKIP_HEADING_SHORT_WORDS_OPTION ); ?>" value="0">
 						<label>
-							<input type="checkbox" name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION ); ?>" value="1" <?php checked( $skip_heading_short_words ); ?>>
+							<input type="checkbox" name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SKIP_HEADING_SHORT_WORDS_OPTION ); ?>" value="1" <?php checked( $skip_heading_short_words ); ?>>
 							<?php esc_html_e( 'Не склеивать короткие слова в заголовках', 'wp-russian-preposition-glue' ); ?>
 						</label>
 						<p class="description">
@@ -280,7 +280,7 @@ function history_alive_typography_render_settings_page(): void {
 
 							<p>
 								<label>
-									<input type="radio" name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OPTION ); ?>" value="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT ); ?>" <?php checked( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT, $short_word_mode ); ?>>
+									<input type="radio" name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OPTION ); ?>" value="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT ); ?>" <?php checked( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT, $short_word_mode ); ?>>
 									<?php esc_html_e( 'Мягкий', 'wp-russian-preposition-glue' ); ?>
 								</label>
 							</p>
@@ -295,7 +295,7 @@ function history_alive_typography_render_settings_page(): void {
 								<input
 									type="number"
 									id="wp-russian-preposition-glue-soft-max-next-word-length"
-									name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_OPTION ); ?>"
+									name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SOFT_MAX_NEXT_WORD_LENGTH_OPTION ); ?>"
 									value="<?php echo esc_attr( (string) $soft_max_next_word_length ); ?>"
 									min="4"
 									max="20"
@@ -309,7 +309,7 @@ function history_alive_typography_render_settings_page(): void {
 
 							<p>
 								<label>
-									<input type="radio" name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OPTION ); ?>" value="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_FULL ); ?>" <?php checked( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_FULL, $short_word_mode ); ?>>
+									<input type="radio" name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OPTION ); ?>" value="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_FULL ); ?>" <?php checked( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_FULL, $short_word_mode ); ?>>
 									<?php esc_html_e( 'Полный', 'wp-russian-preposition-glue' ); ?>
 								</label>
 							</p>
@@ -319,7 +319,7 @@ function history_alive_typography_render_settings_page(): void {
 
 							<p>
 								<label>
-									<input type="radio" name="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OPTION ); ?>" value="<?php echo esc_attr( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OFF ); ?>" <?php checked( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OFF, $short_word_mode ); ?>>
+									<input type="radio" name="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OPTION ); ?>" value="<?php echo esc_attr( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OFF ); ?>" <?php checked( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OFF, $short_word_mode ); ?>>
 									<?php esc_html_e( 'Выключено', 'wp-russian-preposition-glue' ); ?>
 								</label>
 							</p>
@@ -343,7 +343,7 @@ function history_alive_typography_render_settings_page(): void {
  * @param string $context   Output context: post, title, comment.
  * @param int    $object_id Related post/comment ID.
  */
-function history_alive_typography_should_process( string $context = 'post', int $object_id = 0 ): bool {
+function wp_russian_preposition_glue_should_process( string $context = 'post', int $object_id = 0 ): bool {
 	if ( is_admin() || is_feed() || wp_doing_ajax() ) {
 		return false;
 	}
@@ -352,11 +352,11 @@ function history_alive_typography_should_process( string $context = 'post', int 
 		return false;
 	}
 
-	if ( HISTORY_ALIVE_TYPOGRAPHY_SCOPE_ALL === history_alive_typography_get_scope() ) {
+	if ( WP_RUSSIAN_PREPOSITION_GLUE_SCOPE_ALL === wp_russian_preposition_glue_get_scope() ) {
 		return true;
 	}
 
-	return history_alive_typography_is_singular_post_page_context( $context, $object_id );
+	return wp_russian_preposition_glue_is_singular_post_page_context( $context, $object_id );
 }
 
 /**
@@ -365,7 +365,7 @@ function history_alive_typography_should_process( string $context = 'post', int 
  * @param string $context   Output context: post, title, comment.
  * @param int    $object_id Related post/comment ID.
  */
-function history_alive_typography_is_singular_post_page_context( string $context, int $object_id = 0 ): bool {
+function wp_russian_preposition_glue_is_singular_post_page_context( string $context, int $object_id = 0 ): bool {
 	if ( ! is_singular( array( 'post', 'page' ) ) ) {
 		return false;
 	}
@@ -402,8 +402,8 @@ function history_alive_typography_is_singular_post_page_context( string $context
  *
  * @param string $mode Short-word glue mode.
  */
-function history_alive_typography_get_short_words_for_mode( string $mode ): array {
-	if ( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT === $mode ) {
+function wp_russian_preposition_glue_get_short_words_for_mode( string $mode ): array {
+	if ( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT === $mode ) {
 		return array(
 			'а',
 			'в',
@@ -415,7 +415,7 @@ function history_alive_typography_get_short_words_for_mode( string $mode ): arra
 		);
 	}
 
-	if ( HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_FULL !== $mode ) {
+	if ( WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_FULL !== $mode ) {
 		return array();
 	}
 
@@ -484,7 +484,7 @@ function history_alive_typography_get_short_words_for_mode( string $mode ): arra
  *
  * @param string $text Text to count.
  */
-function history_alive_typography_utf8_length( string $text ): int {
+function wp_russian_preposition_glue_utf8_length( string $text ): int {
 	if ( function_exists( 'mb_strlen' ) ) {
 		return mb_strlen( $text, 'UTF-8' );
 	}
@@ -498,17 +498,17 @@ function history_alive_typography_utf8_length( string $text ): int {
  * @param string $text Plain text.
  * @param string $mode Short-word glue mode.
  */
-function history_alive_typography_glue_short_words( string $text, string $mode ): string {
-	$mode        = history_alive_typography_sanitize_short_word_mode( $mode );
-	$short_words = history_alive_typography_get_short_words_for_mode( $mode );
+function wp_russian_preposition_glue_glue_short_words( string $text, string $mode ): string {
+	$mode        = wp_russian_preposition_glue_sanitize_short_word_mode( $mode );
+	$short_words = wp_russian_preposition_glue_get_short_words_for_mode( $mode );
 
 	if ( array() === $short_words ) {
 		return $text;
 	}
 
 	$nbsp                      = "\xC2\xA0";
-	$soft_max_next_word_length = HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT === $mode
-		? history_alive_typography_get_soft_max_next_word_length()
+	$soft_max_next_word_length = WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT === $mode
+		? wp_russian_preposition_glue_get_soft_max_next_word_length()
 		: 0;
 	$words_pattern             = implode(
 		'|',
@@ -522,9 +522,9 @@ function history_alive_typography_glue_short_words( string $text, string $mode )
 		'/(\A|[^\p{L}\p{N}])(' . $words_pattern . ')[ \t]+(?=([\p{L}\p{N}][\p{L}\p{N}-]*))/iu',
 		static function ( array $matches ) use ( $mode, $nbsp, $soft_max_next_word_length ): string {
 			if (
-				HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_SOFT === $mode
+				WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_SOFT === $mode
 				&& isset( $matches[3] )
-				&& history_alive_typography_utf8_length( $matches[3] ) > $soft_max_next_word_length
+				&& wp_russian_preposition_glue_utf8_length( $matches[3] ) > $soft_max_next_word_length
 			) {
 				return $matches[0];
 			}
@@ -541,7 +541,7 @@ function history_alive_typography_glue_short_words( string $text, string $mode )
  * @param string           $text            Plain text.
  * @param string|bool|null $short_word_mode Short-word glue mode or legacy boolean.
  */
-function history_alive_typography_process_text( string $text, string|bool|null $short_word_mode = null ): string {
+function wp_russian_preposition_glue_process_text( string $text, string|bool|null $short_word_mode = null ): string {
 	if ( '' === $text ) {
 		return $text;
 	}
@@ -549,11 +549,11 @@ function history_alive_typography_process_text( string $text, string|bool|null $
 	$nbsp = "\xC2\xA0";
 
 	if ( is_bool( $short_word_mode ) ) {
-		$short_word_mode = $short_word_mode ? history_alive_typography_get_short_word_mode() : HISTORY_ALIVE_TYPOGRAPHY_SHORT_WORD_MODE_OFF;
+		$short_word_mode = $short_word_mode ? wp_russian_preposition_glue_get_short_word_mode() : WP_RUSSIAN_PREPOSITION_GLUE_SHORT_WORD_MODE_OFF;
 	} elseif ( null === $short_word_mode ) {
-		$short_word_mode = history_alive_typography_get_short_word_mode();
+		$short_word_mode = wp_russian_preposition_glue_get_short_word_mode();
 	} else {
-		$short_word_mode = history_alive_typography_sanitize_short_word_mode( $short_word_mode );
+		$short_word_mode = wp_russian_preposition_glue_sanitize_short_word_mode( $short_word_mode );
 	}
 
 	$text = preg_replace( '/\bдо[ \t]+н\.[ \t]*э\./iu', 'до' . $nbsp . 'н.' . $nbsp . 'э.', $text ) ?? $text;
@@ -565,7 +565,7 @@ function history_alive_typography_process_text( string $text, string|bool|null $
 		$text
 	) ?? $text;
 
-	return history_alive_typography_glue_short_words( $text, $short_word_mode );
+	return wp_russian_preposition_glue_glue_short_words( $text, $short_word_mode );
 }
 
 /**
@@ -573,12 +573,12 @@ function history_alive_typography_process_text( string $text, string|bool|null $
  *
  * @param string $html Rendered HTML.
  */
-function history_alive_typography_process_html( string $html ): string {
-	if ( '' === $html || ! history_alive_typography_should_process( 'post', (int) get_the_ID() ) ) {
+function wp_russian_preposition_glue_process_html( string $html ): string {
+	if ( '' === $html || ! wp_russian_preposition_glue_should_process( 'post', (int) get_the_ID() ) ) {
 		return $html;
 	}
 
-	return history_alive_typography_process_html_nodes( $html );
+	return wp_russian_preposition_glue_process_html_nodes( $html );
 }
 
 /**
@@ -586,9 +586,9 @@ function history_alive_typography_process_html( string $html ): string {
  *
  * @param string $html Rendered HTML.
  */
-function history_alive_typography_process_html_nodes( string $html ): string {
+function wp_russian_preposition_glue_process_html_nodes( string $html ): string {
 	if ( false === strpos( $html, '<' ) ) {
-		return history_alive_typography_process_text( $html );
+		return wp_russian_preposition_glue_process_text( $html );
 	}
 
 	$parts       = preg_split( '/(<[^>]+>)/u', $html, -1, PREG_SPLIT_DELIM_CAPTURE );
@@ -636,8 +636,8 @@ function history_alive_typography_process_html_nodes( string $html ): string {
 			continue;
 		}
 
-		$glue_short_words = ! ( $heading_depth > 0 && history_alive_typography_skip_short_words_in_headings() );
-		$result .= $skip_depth > 0 ? $part : history_alive_typography_process_text( $part, $glue_short_words );
+		$glue_short_words = ! ( $heading_depth > 0 && wp_russian_preposition_glue_skip_short_words_in_headings() );
+		$result .= $skip_depth > 0 ? $part : wp_russian_preposition_glue_process_text( $part, $glue_short_words );
 	}
 
 	return $result;
@@ -649,12 +649,12 @@ function history_alive_typography_process_html_nodes( string $html ): string {
  * @param string $text    Plain text.
  * @param int    $post_id Related post ID.
  */
-function history_alive_typography_process_plain_output( string $text, int $post_id = 0 ): string {
-	if ( '' === $text || ! history_alive_typography_should_process( 'title', $post_id ) ) {
+function wp_russian_preposition_glue_process_plain_output( string $text, int $post_id = 0 ): string {
+	if ( '' === $text || ! wp_russian_preposition_glue_should_process( 'title', $post_id ) ) {
 		return $text;
 	}
 
-	return history_alive_typography_process_text( $text, ! history_alive_typography_skip_short_words_in_headings() );
+	return wp_russian_preposition_glue_process_text( $text, ! wp_russian_preposition_glue_skip_short_words_in_headings() );
 }
 
 /**
@@ -663,7 +663,7 @@ function history_alive_typography_process_plain_output( string $text, int $post_
  * @param string $html    Rendered comment HTML.
  * @param mixed  $comment Optional comment object or ID.
  */
-function history_alive_typography_process_comment_html( string $html, mixed $comment = null ): string {
+function wp_russian_preposition_glue_process_comment_html( string $html, mixed $comment = null ): string {
 	$comment_id = 0;
 
 	if ( $comment instanceof WP_Comment ) {
@@ -672,14 +672,14 @@ function history_alive_typography_process_comment_html( string $html, mixed $com
 		$comment_id = (int) $comment;
 	}
 
-	if ( '' === $html || ! history_alive_typography_should_process( 'comment', $comment_id ) ) {
+	if ( '' === $html || ! wp_russian_preposition_glue_should_process( 'comment', $comment_id ) ) {
 		return $html;
 	}
 
-	return history_alive_typography_process_html_nodes( $html );
+	return wp_russian_preposition_glue_process_html_nodes( $html );
 }
 
-add_filter( 'the_content', 'history_alive_typography_process_html', 99 );
-add_filter( 'the_excerpt', 'history_alive_typography_process_html', 99 );
-add_filter( 'comment_text', 'history_alive_typography_process_comment_html', 99, 2 );
-add_filter( 'the_title', 'history_alive_typography_process_plain_output', 99, 2 );
+add_filter( 'the_content', 'wp_russian_preposition_glue_process_html', 99 );
+add_filter( 'the_excerpt', 'wp_russian_preposition_glue_process_html', 99 );
+add_filter( 'comment_text', 'wp_russian_preposition_glue_process_comment_html', 99, 2 );
+add_filter( 'the_title', 'wp_russian_preposition_glue_process_plain_output', 99, 2 );
