@@ -161,6 +161,100 @@ function russian_typography_sanitize_checkbox( mixed $value ): string {
 }
 
 /**
+ * Returns heading tags supported by the per-level typography setting.
+ *
+ * @return array<int, string>
+ */
+function russian_typography_get_heading_tags(): array {
+	return array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' );
+}
+
+/**
+ * Returns default heading levels where typography is disabled.
+ *
+ * @return array<int, string>
+ */
+function russian_typography_get_default_disabled_headings(): array {
+	return array( 'h1', 'h2', 'h3' );
+}
+
+/**
+ * Sanitizes the disabled heading levels setting.
+ *
+ * @param mixed $value Raw option value.
+ * @return array<int, string>
+ */
+function russian_typography_sanitize_disabled_headings( mixed $value ): array {
+	if ( ! is_array( $value ) ) {
+		return array();
+	}
+
+	$allowed  = array_fill_keys( russian_typography_get_heading_tags(), true );
+	$disabled = array();
+
+	foreach ( $value as $tag ) {
+		$tag = sanitize_key( (string) $tag );
+
+		if ( isset( $allowed[ $tag ] ) ) {
+			$disabled[ $tag ] = true;
+		}
+	}
+
+	return array_keys( $disabled );
+}
+
+/**
+ * Returns heading levels where typography must not touch text nodes.
+ *
+ * @return array<int, string>
+ */
+function russian_typography_get_disabled_headings(): array {
+	$value = get_option( RUSSIAN_TYPOGRAPHY_DISABLED_HEADINGS_OPTION, null );
+
+	if ( null !== $value && false !== $value ) {
+		return russian_typography_sanitize_disabled_headings( $value );
+	}
+
+	$legacy_value = get_option( RUSSIAN_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION, null );
+
+	if ( null !== $legacy_value && false !== $legacy_value ) {
+		return '1' === russian_typography_sanitize_checkbox( $legacy_value )
+			? russian_typography_get_default_disabled_headings()
+			: array();
+	}
+
+	return russian_typography_get_default_disabled_headings();
+}
+
+/**
+ * Returns true when typography should be skipped inside the given heading tag.
+ *
+ * @param string $tag Heading tag name.
+ */
+function russian_typography_is_heading_typography_disabled( string $tag ): bool {
+	return in_array( strtolower( $tag ), russian_typography_get_disabled_headings(), true );
+}
+
+/**
+ * Returns true when typography should be skipped for the_title() output.
+ */
+function russian_typography_disable_title_typography(): bool {
+	$value = get_option( RUSSIAN_TYPOGRAPHY_DISABLE_TITLE_TYPOGRAPHY_OPTION, null );
+
+	if ( null !== $value && false !== $value ) {
+		return '1' === russian_typography_sanitize_checkbox( $value );
+	}
+
+	$legacy_value = get_option( RUSSIAN_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION, null );
+
+	if ( null !== $legacy_value && false !== $legacy_value ) {
+		return '1' === russian_typography_sanitize_checkbox( $legacy_value );
+	}
+
+	return true;
+}
+
+/**
  * Returns true when short service words should not be glued inside headings.
  */
 function russian_typography_skip_short_words_in_headings(): bool {
@@ -185,7 +279,17 @@ function russian_typography_register_settings(): void {
 
 	register_setting(
 		'russian_typography',
-		RUSSIAN_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION,
+		RUSSIAN_TYPOGRAPHY_DISABLED_HEADINGS_OPTION,
+		array(
+			'type'              => 'array',
+			'sanitize_callback' => 'russian_typography_sanitize_disabled_headings',
+			'default'           => russian_typography_get_default_disabled_headings(),
+		)
+	);
+
+	register_setting(
+		'russian_typography',
+		RUSSIAN_TYPOGRAPHY_DISABLE_TITLE_TYPOGRAPHY_OPTION,
 		array(
 			'type'              => 'string',
 			'sanitize_callback' => 'russian_typography_sanitize_checkbox',
@@ -246,7 +350,8 @@ function russian_typography_render_settings_page(): void {
 	}
 
 	$scope                     = russian_typography_get_scope();
-	$skip_heading_short_words  = russian_typography_skip_short_words_in_headings();
+	$disabled_headings         = russian_typography_get_disabled_headings();
+	$disable_title_typography  = russian_typography_disable_title_typography();
 	$short_word_mode           = russian_typography_get_short_word_mode();
 	$soft_max_next_word_length = russian_typography_get_soft_max_next_word_length();
 	$full_max_next_word_length = russian_typography_get_full_max_next_word_length();
@@ -303,22 +408,53 @@ function russian_typography_render_settings_page(): void {
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><?php echo esc_html__( 'Headings', 'russian-typography' ); ?></th>
+					<th scope="row"><?php echo esc_html__( 'Отключить типографику в заголовках', 'russian-typography' ); ?></th>
 					<td>
-						<input type="hidden" name="<?php echo esc_attr( RUSSIAN_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION ); ?>" value="0">
-						<label for="russian-typography-skip-heading-short-words">
+						<fieldset aria-describedby="russian-typography-disabled-headings-description">
+							<legend class="screen-reader-text">
+								<?php echo esc_html__( 'Отключить типографику в заголовках', 'russian-typography' ); ?>
+							</legend>
+
+							<input type="hidden" name="<?php echo esc_attr( RUSSIAN_TYPOGRAPHY_DISABLED_HEADINGS_OPTION ); ?>[]" value="">
+
+							<?php foreach ( russian_typography_get_heading_tags() as $heading_tag ) : ?>
+								<p>
+									<label for="russian-typography-disabled-heading-<?php echo esc_attr( $heading_tag ); ?>">
+										<input
+											type="checkbox"
+											id="russian-typography-disabled-heading-<?php echo esc_attr( $heading_tag ); ?>"
+											name="<?php echo esc_attr( RUSSIAN_TYPOGRAPHY_DISABLED_HEADINGS_OPTION ); ?>[]"
+											value="<?php echo esc_attr( $heading_tag ); ?>"
+											<?php checked( in_array( $heading_tag, $disabled_headings, true ) ); ?>
+										>
+										<?php echo esc_html( $heading_tag ); ?>
+									</label>
+								</p>
+							<?php endforeach; ?>
+
+							<p id="russian-typography-disabled-headings-description" class="description">
+								<?php echo wp_kses_post( __( 'Если выбран h2, текст внутри <code>&lt;h2&gt;...&lt;/h2&gt;</code> не обрабатывается типографом вообще.', 'russian-typography' ) ); ?>
+							</p>
+						</fieldset>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php echo esc_html__( 'Заголовки записей и карточек', 'russian-typography' ); ?></th>
+					<td>
+						<input type="hidden" name="<?php echo esc_attr( RUSSIAN_TYPOGRAPHY_DISABLE_TITLE_TYPOGRAPHY_OPTION ); ?>" value="0">
+						<label for="russian-typography-disable-title-typography">
 							<input
 								type="checkbox"
-								id="russian-typography-skip-heading-short-words"
-								name="<?php echo esc_attr( RUSSIAN_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION ); ?>"
+								id="russian-typography-disable-title-typography"
+								name="<?php echo esc_attr( RUSSIAN_TYPOGRAPHY_DISABLE_TITLE_TYPOGRAPHY_OPTION ); ?>"
 								value="1"
-								aria-describedby="russian-typography-skip-heading-short-words-description"
-								<?php checked( $skip_heading_short_words ); ?>
+								aria-describedby="russian-typography-disable-title-typography-description"
+								<?php checked( $disable_title_typography ); ?>
 							>
-							<?php echo esc_html__( 'Do not glue short words in headings', 'russian-typography' ); ?>
+							<?php echo esc_html__( 'Отключить типографику в заголовках записей и карточек', 'russian-typography' ); ?>
 						</label>
-						<p id="russian-typography-skip-heading-short-words-description" class="description">
-							<?php echo esc_html__( 'Leaves regular spaces after short conjunctions, prepositions, particles, and pronouns in post titles and h1-h6 headings so mobile line breaks are not harmed by non-breaking spaces.', 'russian-typography' ); ?>
+						<p id="russian-typography-disable-title-typography-description" class="description">
+							<?php echo esc_html__( 'Применяется к the_title(): H1 записи, карточкам, архивам и связанным материалам.', 'russian-typography' ); ?>
 						</p>
 					</td>
 				</tr>

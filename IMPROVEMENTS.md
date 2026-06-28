@@ -39,6 +39,8 @@
    При удалении плагина через WordPress можно удалить сохраненные options:
    `russian_typography_scope`,
    `russian_typography_skip_heading_short_words`,
+   `russian_typography_disabled_headings`,
+   `russian_typography_disable_title_typography`,
    `russian_typography_short_word_mode`,
    `russian_typography_soft_max_next_word_length`.
 

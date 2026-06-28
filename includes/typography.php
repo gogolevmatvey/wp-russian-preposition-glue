@@ -572,7 +572,7 @@ function russian_typography_process_html_nodes( string $html ): string {
 		: preg_split( '/(<[^>]+>)/u', $html, -1, PREG_SPLIT_DELIM_CAPTURE );
 	$result         = '';
 	$skip_depth     = 0;
-	$heading_depth  = 0;
+	$heading_stack  = array();
 	$skip_tags      = array( 'code', 'kbd', 'pre', 'samp', 'script', 'style', 'textarea' );
 	$skip_lookup    = array_fill_keys( $skip_tags, true );
 	$heading_tags   = array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' );
@@ -595,8 +595,15 @@ function russian_typography_process_html_nodes( string $html ): string {
 					--$skip_depth;
 				}
 
-				if ( isset( $heading_lookup[ $tag ] ) && $heading_depth > 0 ) {
-					--$heading_depth;
+				if ( isset( $heading_lookup[ $tag ] ) && array() !== $heading_stack ) {
+					for ( $index = count( $heading_stack ) - 1; $index >= 0; --$index ) {
+						if ( $heading_stack[ $index ] !== $tag ) {
+							continue;
+						}
+
+						array_splice( $heading_stack, $index, 1 );
+						break;
+					}
 				}
 			} elseif ( preg_match( '#^<\s*([a-z0-9:-]+)(?:\s|>|/)#i', $part, $open_matches ) ) {
 				$tag = strtolower( $open_matches[1] );
@@ -606,7 +613,7 @@ function russian_typography_process_html_nodes( string $html ): string {
 				}
 
 				if ( isset( $heading_lookup[ $tag ] ) && ! preg_match( '#/>\s*$#', $part ) ) {
-					++$heading_depth;
+					$heading_stack[] = $tag;
 				}
 			}
 
@@ -614,8 +621,17 @@ function russian_typography_process_html_nodes( string $html ): string {
 			continue;
 		}
 
-		$glue_short_words = ! ( $heading_depth > 0 && russian_typography_skip_short_words_in_headings() );
-		$result          .= $skip_depth > 0 ? $part : russian_typography_process_text( $part, $glue_short_words );
+		$current_heading = end( $heading_stack );
+
+		if (
+			$skip_depth > 0
+			|| ( is_string( $current_heading ) && russian_typography_is_heading_typography_disabled( $current_heading ) )
+		) {
+			$result .= $part;
+			continue;
+		}
+
+		$result .= russian_typography_process_text( $part );
 	}
 
 	return $result;

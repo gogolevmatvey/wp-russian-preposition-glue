@@ -7,12 +7,22 @@
 
 declare(strict_types=1);
 
-define( 'ABSPATH', dirname( __DIR__, 2 ) . '/' );
+$russian_typography_root_dir   = dirname( __DIR__, 2 );
+$russian_typography_plugin_dir = is_file( $russian_typography_root_dir . '/russian-typography.php' )
+	? $russian_typography_root_dir
+	: $russian_typography_root_dir . '/www/wordpress/wp-content/plugins/russian-typography';
+$russian_typography_wp_dir     = is_dir( $russian_typography_root_dir . '/www/wordpress' )
+	? $russian_typography_root_dir . '/www/wordpress/'
+	: $russian_typography_root_dir . '/';
+
+define( 'ABSPATH', $russian_typography_wp_dir );
 
 define( 'RUSSIAN_TYPOGRAPHY_SCOPE_OPTION', 'russian_typography_scope' );
 define( 'RUSSIAN_TYPOGRAPHY_SCOPE_ALL', 'all' );
 define( 'RUSSIAN_TYPOGRAPHY_SCOPE_SINGLE', 'singular' );
 define( 'RUSSIAN_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION', 'russian_typography_skip_heading_short_words' );
+define( 'RUSSIAN_TYPOGRAPHY_DISABLED_HEADINGS_OPTION', 'russian_typography_disabled_headings' );
+define( 'RUSSIAN_TYPOGRAPHY_DISABLE_TITLE_TYPOGRAPHY_OPTION', 'russian_typography_disable_title_typography' );
 define( 'RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_OPTION', 'russian_typography_short_word_mode' );
 define( 'RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_SOFT', 'soft' );
 define( 'RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_FULL', 'full' );
@@ -22,6 +32,8 @@ define( 'RUSSIAN_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_OPTION', 'russian_typograp
 define( 'RUSSIAN_TYPOGRAPHY_SOFT_MAX_NEXT_WORD_LENGTH_DEFAULT', 10 );
 define( 'RUSSIAN_TYPOGRAPHY_FULL_MAX_NEXT_WORD_LENGTH_OPTION', 'russian_typography_full_max_next_word_length' );
 define( 'RUSSIAN_TYPOGRAPHY_FULL_MAX_NEXT_WORD_LENGTH_DEFAULT', 14 );
+
+$russian_typography_test_options = array();
 
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
@@ -46,7 +58,11 @@ if ( ! function_exists( 'get_option' ) ) {
 	 * @param mixed  $fallback Fallback value.
 	 */
 	function get_option( string $option, mixed $fallback = false ): mixed {
-		unset( $option );
+		global $russian_typography_test_options;
+
+		if ( array_key_exists( $option, $russian_typography_test_options ) ) {
+			return $russian_typography_test_options[ $option ];
+		}
 
 		return $fallback;
 	}
@@ -74,8 +90,36 @@ if ( ! function_exists( 'absint' ) ) {
 	}
 }
 
-require_once dirname( __DIR__, 2 ) . '/includes/settings.php';
-require_once dirname( __DIR__, 2 ) . '/includes/typography.php';
+if ( ! function_exists( 'is_admin' ) ) {
+	/**
+	 * Minimal WordPress is_admin stub for standalone tests.
+	 */
+	function is_admin(): bool {
+		return false;
+	}
+}
+
+if ( ! function_exists( 'is_feed' ) ) {
+	/**
+	 * Minimal WordPress is_feed stub for standalone tests.
+	 */
+	function is_feed(): bool {
+		return false;
+	}
+}
+
+if ( ! function_exists( 'wp_doing_ajax' ) ) {
+	/**
+	 * Minimal WordPress wp_doing_ajax stub for standalone tests.
+	 */
+	function wp_doing_ajax(): bool {
+		return false;
+	}
+}
+
+require_once $russian_typography_plugin_dir . '/includes/settings.php';
+require_once $russian_typography_plugin_dir . '/includes/typography.php';
+require_once $russian_typography_plugin_dir . '/includes/hooks.php';
 
 $russian_typography_failures = array();
 $russian_typography_nbsp     = "\xC2\xA0";
@@ -110,6 +154,92 @@ function russian_typography_assert_same( string $label, string $expected, string
 		russian_typography_format_test_value( $actual )
 	);
 }
+
+/**
+ * Sets option values returned by the standalone get_option stub.
+ *
+ * @param array<string, mixed> $options Option map.
+ */
+function russian_typography_set_test_options( array $options ): void {
+	global $russian_typography_test_options;
+
+	$russian_typography_test_options = $options;
+}
+
+russian_typography_set_test_options( array() );
+
+russian_typography_assert_same(
+	'Default settings must disable typography for h1-h3 headings.',
+	'h1,h2,h3',
+	implode( ',', russian_typography_get_disabled_headings() )
+);
+
+russian_typography_assert_same(
+	'Default settings must disable typography for the_title output.',
+	'1',
+	russian_typography_disable_title_typography() ? '1' : '0'
+);
+
+russian_typography_set_test_options(
+	array(
+		RUSSIAN_TYPOGRAPHY_SKIP_HEADING_SHORT_WORDS_OPTION => '0',
+	)
+);
+
+russian_typography_assert_same(
+	'Legacy disabled heading setting off must keep all heading levels enabled until new settings are saved.',
+	'',
+	implode( ',', russian_typography_get_disabled_headings() )
+);
+
+russian_typography_assert_same(
+	'Legacy disabled heading setting off must keep the_title typography enabled until new settings are saved.',
+	'0',
+	russian_typography_disable_title_typography() ? '1' : '0'
+);
+
+russian_typography_set_test_options(
+	array(
+		RUSSIAN_TYPOGRAPHY_DISABLED_HEADINGS_OPTION => array( 'h2', 'h2', 'unknown', '' ),
+		RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_OPTION   => RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_STANDART,
+	)
+);
+
+$russian_typography_processed_history_date = 'в' . $russian_typography_nbsp . '480 году до' . $russian_typography_nbsp . 'н.' . $russian_typography_nbsp . 'э.';
+
+russian_typography_assert_same(
+	'HTML processing must fully skip disabled heading levels and process enabled headings normally.',
+	'<h2>в 480 году до н. э.</h2><h3>' . $russian_typography_processed_history_date . '</h3><p>' . $russian_typography_processed_history_date . '</p>',
+	russian_typography_process_html_nodes( '<h2>в 480 году до н. э.</h2><h3>в 480 году до н. э.</h3><p>в 480 году до н. э.</p>' )
+);
+
+russian_typography_set_test_options(
+	array(
+		RUSSIAN_TYPOGRAPHY_SCOPE_OPTION                    => RUSSIAN_TYPOGRAPHY_SCOPE_ALL,
+		RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_OPTION          => RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_STANDART,
+		RUSSIAN_TYPOGRAPHY_DISABLE_TITLE_TYPOGRAPHY_OPTION => '1',
+	)
+);
+
+russian_typography_assert_same(
+	'Title processing must return the original text when title typography is disabled.',
+	'в 480 году до н. э.',
+	russian_typography_process_plain_output( 'в 480 году до н. э.', 1 )
+);
+
+russian_typography_set_test_options(
+	array(
+		RUSSIAN_TYPOGRAPHY_SCOPE_OPTION                    => RUSSIAN_TYPOGRAPHY_SCOPE_ALL,
+		RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_OPTION          => RUSSIAN_TYPOGRAPHY_SHORT_WORD_MODE_STANDART,
+		RUSSIAN_TYPOGRAPHY_DISABLE_TITLE_TYPOGRAPHY_OPTION => '0',
+	)
+);
+
+russian_typography_assert_same(
+	'Title processing must apply the active typography mode when title typography is enabled.',
+	$russian_typography_processed_history_date,
+	russian_typography_process_plain_output( 'в 480 году до н. э.', 1 )
+);
 
 russian_typography_assert_same(
 	'Full mode must glue semantic prepositions and conjunctions.',

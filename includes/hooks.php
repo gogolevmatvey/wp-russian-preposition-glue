@@ -126,7 +126,11 @@ function russian_typography_process_plain_output( string $text, int $post_id = 0
 		return $text;
 	}
 
-	return russian_typography_process_text( $text, ! russian_typography_skip_short_words_in_headings() );
+	if ( russian_typography_disable_title_typography() ) {
+		return $text;
+	}
+
+	return russian_typography_process_text( $text );
 }
 
 /**

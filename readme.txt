@@ -20,7 +20,7 @@ The plugin can:
 * glue historical abbreviations such as `n. e.` and `do n. e.` in Russian text;
 * glue numbers with common Russian units such as `5 km`, `480 year`, and `24 hours`;
 * limit processing to single posts and pages;
-* skip short-word gluing inside headings to avoid worse line breaks on narrow screens;
+* disable typography for selected heading levels and for post/card titles that pass through `the_title()`;
 * keep long next words breakable in full mode with a separate length threshold;
 * imitate Art. Lebedev Typograf spacing locally in the `standart` mode.
 
@@ -53,9 +53,9 @@ The `standart` mode also keeps common historical dates, centuries, units, percen
 
 No. Processing runs only when HTML is rendered.
 
-= Can short-word gluing be disabled in headings? =
+= Can typography be disabled in headings? =
 
-Yes. Use the "Do not glue short words in headings" setting.
+Yes. Disable typography for the needed heading levels (`h1`-`h6`) in Settings -> Russian Typography. Post and card titles that pass through `the_title()` have a separate setting.
 
 = What happens when the plugin is uninstalled? =
 
